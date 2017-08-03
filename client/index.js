@@ -3,14 +3,14 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import {Provider} from 'react-redux'
 import store from './store'
-import Routes from './routes'
+import Grid from './Grid'
 
 // establishes socket connection
 import socket from './socket'
 
 ReactDOM.render(
   <Provider store={store}>
-    <Routes />
+    <Grid />
   </Provider>,
   document.getElementById('app')
 )
