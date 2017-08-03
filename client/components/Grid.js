@@ -2,17 +2,18 @@ import React, { Component } from 'react'
 import { Router } from 'react-router'
 
 import { gridInfo } from './grid-info'
+import Comb from './Comb'
 
 /**
  * COMPONENT
  */
-export default class Routes extends Component {
+export default class Grid extends Component {
 
   render () {
-  
+
     const styles={
-      fill: "lime", 
-      stroke: "black", 
+      fill: "lime",
+      stroke: "black",
       strokeWidth: 3
     }
 
@@ -23,9 +24,7 @@ export default class Routes extends Component {
           {
             gridInfo.map((info, index) => {
               return (
-                  <g key={index} style={styles} transform={"translate(" + info[0] + "," + info[1] + ")"}>
-                    <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-                  </g>
+                <Comb key={index} info={info} />
               )
             })
           }
@@ -36,6 +35,14 @@ export default class Routes extends Component {
   }
 }
         
+// /**
+//  * CONTAINER
+//  */
+
+// /**
+//  * PROP TYPES
+//  */
+
 //        <g style={styles} transform={"translate(-129.90381056766577,225)"}>
 //       <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
 //           </g>
@@ -316,10 +323,3 @@ export default class Routes extends Component {
 //   }
 // }
 
-// /**
-//  * CONTAINER
-//  */
-
-// /**
-//  * PROP TYPES
-//  */
