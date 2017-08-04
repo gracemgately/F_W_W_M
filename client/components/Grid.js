@@ -83,21 +83,9 @@ export default class Grid extends Component {
 
     this.state.comb.forEach((node, index) => {
 
-      //CASE: IGNITE TREES
-      if (node.color === 'lime') {
-
-        let nodeNeighbors = findNeighbors(node.coordinate);
-        let nodesToChangeCoords = ignite(node, nodeNeighbors, this.state.comb);
-
-        if (nodesToChangeCoords.length){
-            var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
-            changeIndices.forEach(index => {
-              newCombArray[index].color = 'red';
-            })
-         }
-    }
-
-      //CASE: PUT OUT SMALL FIRE
+      //CASE: PUT OUT SMALL FIRE --> this check comes first because you need to see if the
+      //next space will become red or white, and only if it does not will you check to see if any 
+      //trees will ignite 
       if(node.color === 'red'){
 
         let nodeNeighbors = findNeighbors(node.coordinate);
@@ -111,19 +99,23 @@ export default class Grid extends Component {
             })
          }
 
-        //if a red comb is surrounded by less than three trees, make that node 'walk' along 
-        //the x-axis and leave an empty space behind it 
+        //if a red comb is surrounded by less than three trees and does't run into
+        //a tree, make that node 'walk' along the x-axis and leave an empty space behind it 
         if (!nodesToChangeCoords.length){
 
           this.state.comb.forEach((combNode, index) => {
 
             var fireWalk = setInterval(() => {
               if (combNode.coordinate[0] === node.coordinate[0] && combNode.coordinate[1] === node.coordinate[1]) {
+                //console.log('WHITE WALK BEFORE', newCombArray[index])
                   newCombArray[index].color = 'white';
+                //console.log('WHITE WALK AFTER', newCombArray[index])
               }
               if (combNode.coordinate[0] === (node.coordinate[0] + 1) && combNode.coordinate[1] === node.coordinate[1]) {
                   if (combNode.color === 'white') {
+                    //console.log('RED WALK BEFORE', newCombArray[index])
                     newCombArray[index].color = 'red';
+                    //console.log('RED WALK AFTER', newCombArray[index])
                 }
               }
               clearInterval(fireWalk);
@@ -135,6 +127,22 @@ export default class Grid extends Component {
           })
         }
       }
+
+      //CASE: IGNITE TREES
+      if (node.color === 'lime') {
+
+        let nodeNeighbors = findNeighbors(node.coordinate);
+        let nodesToChangeCoords = ignite(node, nodeNeighbors, this.state.comb);
+
+        if (nodesToChangeCoords.length){
+            var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
+            changeIndices.forEach(index => {
+              //console.log('IGNITE BEFORE', newCombArray[index])
+              newCombArray[index].color = 'red';
+              //console.log('IGNITE AFTER', newCombArray[index])
+            })
+         }
+    }
 
       //CASE: RANDOMLY GENERATE FIRE IN EMPTY SPACE 
       if (node.color === 'white'){
@@ -148,7 +156,7 @@ export default class Grid extends Component {
     var stateWalk = setInterval(() => {
       this.setState({comb: newCombArray});
       clearInterval(stateWalk);
-    }, 300)
+    }, 200)
 
     stateWalk;
 }
@@ -192,6 +200,6 @@ export default class Grid extends Component {
 //  * PROP TYPES
 //  */
 
-
+//NOTE: NAME THIS FIRE WALK WITH ME
 
 
