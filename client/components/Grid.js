@@ -84,14 +84,13 @@ export default class Grid extends Component {
 
     this.state.comb.forEach((node, index) => {
 
-      counter = 1;
+      let nodeNeighbors = findNeighbors(node.coordinate);
 
       //CASE: PUT OUT SMALL FIRE --> this check comes first because you need to see if the
       //next space will become red or white, and only if it does not will you check to see if any 
       //trees will ignite 
       if (node.color === 'red') {
 
-        let nodeNeighbors = findNeighbors(node.coordinate);
         let nodesToChangeCoords = putOut(node, nodeNeighbors, this.state.comb);
 
         //if a red comb is surrounded by three or more trees, turn it into an empty space    
@@ -103,18 +102,15 @@ export default class Grid extends Component {
         }
 
         //if a red comb is surrounded by less than three trees and does't run into
-        //a tree, make that node 'walk' along the x-axis and leave an empty space behind it 
+        //a tree, make that node 'walk' along the diagonal and leave an empty space behind it 
+        //TO FIX: slightly glitchy disappearance along top row
         if (!nodesToChangeCoords.length) {
 
-          //this.state.comb.forEach((combNode, index) => {
-
-            var fireWalk = setInterval(() => {
-
-              //if (combNode.coordinate[0] === node.coordinate[0] && combNode.coordinate[1] === node.coordinate[1]) {
+            const fireWalk = setInterval(() => {
 
                 //if the comb is red and the next comb is not a tree that will not ignite next round: 
                 if (node.color === 'red' && this.state.comb[index + 1].color !== 'lime' && node.coordinate[1] !== -5) {
-                  //console.log('HERE', combNode.coordinate, this.state.comb[index])
+                  console.log('HERE', node.coordinate, this.state.comb[index])
 
                   //if the next comb in the array (on the diagonal SE) is also red, then change current comb's color to white, keep next
                   //comb's color red, change comb after next's color to red to create the illusion of walking
@@ -137,36 +133,30 @@ export default class Grid extends Component {
                   }
                 }
 
-              //}
-
               clearInterval(fireWalk);
             })
 
             fireWalk;
 
-          //})
         }
       }
 
       //CASE: IGNITE TREES
       if (node.color === 'lime') {
 
-        let nodeNeighbors = findNeighbors(node.coordinate);
         let nodesToChangeCoords = ignite(node, nodeNeighbors, this.state.comb);
 
         if (nodesToChangeCoords.length) {
           var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
           changeIndices.forEach(index => {
-            //console.log('IGNITE BEFORE', newCombArray[index])
             newCombArray[index].color = 'red';
-            //console.log('IGNITE AFTER', newCombArray[index])
           })
         }
       }
 
       //CASE: RANDOMLY GENERATE FIRE IN EMPTY SPACE 
       if (node.color === 'white') {
-
+          const fireChance = Math.random();
       }
 
 
