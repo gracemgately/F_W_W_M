@@ -18,7 +18,7 @@ import Comb from './Comb'
  */
 export default class Grid extends Component {
 
-  constructor(){
+  constructor() {
     super();
     this.state = {
       comb: [],
@@ -33,7 +33,7 @@ export default class Grid extends Component {
   //generating new comb object with coordinates that map to a 2D 
   //location on the hexagonal grid, then placing them in an array
   //and putting them on the state so we have access to all of them
-  componentDidMount(){
+  componentDidMount() {
     var honeyComb = [];
 
     coordinates.forEach(coordinate => {
@@ -41,16 +41,16 @@ export default class Grid extends Component {
       honeyComb.push(newComb);
     })
 
-    this.setState({comb: honeyComb})
+    this.setState({ comb: honeyComb })
   }
 
 
   //changing color of a particular comb location on the 2D coordinate
   //grid according to whether it is a tree (lime), a fire (red), or 
   //empty (white)
-  changeColor(currentCombCoords){
+  changeColor(currentCombCoords) {
     this.state.comb.forEach((node, index) => {
-      if (node.coordinate === currentCombCoords){
+      if (node.coordinate === currentCombCoords) {
 
         var colorIndex = this.state.colors.indexOf(node.color);
         var newCombArray = this.state.comb;
@@ -67,7 +67,7 @@ export default class Grid extends Component {
           node.color = 'red';
           newCombArray[index].color = node.color
         }
-        this.setState({comb: newCombArray})
+        this.setState({ comb: newCombArray })
 
       }
     })
@@ -76,55 +76,75 @@ export default class Grid extends Component {
   //starting the game onClick and generating a new iteration of the
   //complete honeycomb according to a slightly modified version of the
   //forest-fire spread algorithm
-  initiateGame(){
+  initiateGame() {
     console.log('game initiated')
 
     let newCombArray = this.state.comb;
+    let counter = 1;
 
     this.state.comb.forEach((node, index) => {
+
+      counter = 1;
 
       //CASE: PUT OUT SMALL FIRE --> this check comes first because you need to see if the
       //next space will become red or white, and only if it does not will you check to see if any 
       //trees will ignite 
-      if(node.color === 'red'){
+      if (node.color === 'red') {
 
         let nodeNeighbors = findNeighbors(node.coordinate);
         let nodesToChangeCoords = putOut(node, nodeNeighbors, this.state.comb);
-        
+
         //if a red comb is surrounded by three or more trees, turn it into an empty space    
-        if (nodesToChangeCoords.length){
-            var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
-            changeIndices.forEach(index => {
-              newCombArray[index].color = 'white';
-            })
-         }
+        if (nodesToChangeCoords.length) {
+          var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
+          changeIndices.forEach(index => {
+            newCombArray[index].color = 'white';
+          })
+        }
 
         //if a red comb is surrounded by less than three trees and does't run into
         //a tree, make that node 'walk' along the x-axis and leave an empty space behind it 
-        if (!nodesToChangeCoords.length){
+        if (!nodesToChangeCoords.length) {
 
-          this.state.comb.forEach((combNode, index) => {
+          //this.state.comb.forEach((combNode, index) => {
 
             var fireWalk = setInterval(() => {
-              if (combNode.coordinate[0] === node.coordinate[0] && combNode.coordinate[1] === node.coordinate[1]) {
-                //console.log('WHITE WALK BEFORE', newCombArray[index])
-                  newCombArray[index].color = 'white';
-                //console.log('WHITE WALK AFTER', newCombArray[index])
-              }
-              if (combNode.coordinate[0] === (node.coordinate[0] + 1) && combNode.coordinate[1] === node.coordinate[1]) {
-                  if (combNode.color === 'white') {
-                    //console.log('RED WALK BEFORE', newCombArray[index])
-                    newCombArray[index].color = 'red';
-                    //console.log('RED WALK AFTER', newCombArray[index])
-                }
-              }
-              clearInterval(fireWalk);
 
-            },100)
+              //if (combNode.coordinate[0] === node.coordinate[0] && combNode.coordinate[1] === node.coordinate[1]) {
+
+                //if the comb is red and the next comb is not a tree that will not ignite next round: 
+                if (node.color === 'red' && this.state.comb[index + 1].color !== 'lime' && node.coordinate[1] !== -5) {
+                  //console.log('HERE', combNode.coordinate, this.state.comb[index])
+
+                  //if the next comb in the array (on the diagonal SE) is also red, then change current comb's color to white, keep next
+                  //comb's color red, change comb after next's color to red to create the illusion of walking
+
+                  if (this.state.comb[index + counter]) {
+                    while (this.state.comb[index + counter].color === 'red') {
+                      counter++;
+                    }
+                    newCombArray[index + 1].color = 'red';
+                    newCombArray[index - (counter - 1)].color = 'white';
+                  }
+                }
+
+                else {//at north row of hexagon, make the fire disappear
+                  while (this.state.comb[index - counter].color === 'red') {
+                    counter++;
+                  }
+                  if (newCombArray[index - counter].color !== 'red') {
+                    newCombArray[index - (counter - 1)].color = 'white';
+                  }
+                }
+
+              //}
+
+              clearInterval(fireWalk);
+            })
 
             fireWalk;
 
-          })
+          //})
         }
       }
 
@@ -134,64 +154,64 @@ export default class Grid extends Component {
         let nodeNeighbors = findNeighbors(node.coordinate);
         let nodesToChangeCoords = ignite(node, nodeNeighbors, this.state.comb);
 
-        if (nodesToChangeCoords.length){
-            var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
-            changeIndices.forEach(index => {
-              //console.log('IGNITE BEFORE', newCombArray[index])
-              newCombArray[index].color = 'red';
-              //console.log('IGNITE AFTER', newCombArray[index])
-            })
-         }
-    }
+        if (nodesToChangeCoords.length) {
+          var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
+          changeIndices.forEach(index => {
+            //console.log('IGNITE BEFORE', newCombArray[index])
+            newCombArray[index].color = 'red';
+            //console.log('IGNITE AFTER', newCombArray[index])
+          })
+        }
+      }
 
       //CASE: RANDOMLY GENERATE FIRE IN EMPTY SPACE 
-      if (node.color === 'white'){
+      if (node.color === 'white') {
 
       }
 
-      //FINALLY SET STATE TO MODIFIED ARRAY
-  })
 
+    })
+    //FINALLY SET STATE TO MODIFIED COPY OF COMBS ARRAY:
     //put state on an interval so all elements are loaded and state updates at once
     var stateWalk = setInterval(() => {
-      this.setState({comb: newCombArray});
+      this.setState({ comb: newCombArray });
       clearInterval(stateWalk);
-    }, 200)
+    }, 100)
 
     stateWalk;
-}
+  }
 
 
-  render () {
+  render() {
     return (
-    <div>
       <div>
-        <svg width="600" height="570">
-          <g transform="translate(300,285)">
-          {
-            gridInfo.map((info, index) => {
-              if (this.state.comb[index]) {
-                var combColor = this.state.comb[index].color
+        <div>
+          <svg width="600" height="570">
+            <g transform="translate(300,285)">
+              {
+                gridInfo.map((info, index) => {
+                  if (this.state.comb[index]) {
+                    var combColor = this.state.comb[index].color
+                  }
+                  return (
+                    <Comb
+                      key={index}
+                      info={info}
+                      currentColor={combColor}
+                      coordinate={coordinates[index]}
+                      changeColor={this.changeColor} />
+                  )
+                })
               }
-              return (
-                <Comb 
-                key={index} 
-                info={info} 
-                currentColor={combColor}
-                coordinate={coordinates[index]}
-                changeColor={this.changeColor}/>
-              )
-            })
-          }
             </g>
-            </svg>
+          </svg>
         </div>
-          <button onClick={this.initiateGame}>IGNITE</button>
+        <button onClick={this.initiateGame}>IGNITE</button>
       </div>
     )
   }
 }
-        
+
 // /**
 //  * CONTAINER
 //  */
