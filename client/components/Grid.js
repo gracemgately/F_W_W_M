@@ -217,8 +217,8 @@ export default class Grid extends Component {
 
   render() {
     return (
-      <div>
-        <div>
+      <div className="container">
+        <div className="item">
           <svg width="600" height="570">
             <g transform="translate(300,285)">
               {
@@ -239,17 +239,23 @@ export default class Grid extends Component {
             </g>
           </svg>
         </div>
-        <div>
-          <select onChange={this.handleChange}>
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="40">40</option>
-            <option value="50">50</option>
-          </select>
+        <div className="item">
+          <div className="small-container">
+            <div className="item">
+              <select onChange={this.handleChange}>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div>
+              <button className="item" onClick={this.handleClick}>IGNITE</button>
+            </div>
+          </div>
         </div>
-        <button onClick={this.handleClick}>IGNITE</button>
       </div>
     )
   }
