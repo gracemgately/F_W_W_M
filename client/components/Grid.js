@@ -1,15 +1,15 @@
 import React, { Component } from 'react'
 import { Router } from 'react-router'
 
-import { gridInfo } from './grid-info'
-import { coordinates } from './coordinates-info'
-import { CombNode } from './comb-constructor'
-import { findNeighbors } from './comb-neighbors'
+import { gridInfo } from './functions/grid-info'
+import { coordinates } from './functions/coordinates-info'
+import { CombNode } from './functions/comb-constructor'
+import { findNeighbors } from './functions/comb-neighbors'
 
 //FUNCTIONS FOR GAME
-import { ignite } from './ignite-trees';
-import { putOut } from './kill-fire';
-import { combIndicesToMutate } from './mutate-comb'
+import { ignite } from './functions/ignite-trees';
+import { putOut } from './functions/kill-fire';
+import { combIndicesToMutate } from './functions/mutate-comb'
 
 import Comb from './Comb'
 
@@ -22,11 +22,16 @@ export default class Grid extends Component {
     super();
     this.state = {
       comb: [],
-      colors: ['white', 'lime', 'red']
+      colors: ['white', 'lime', 'red'],
+      counts: 5
     }
 
-    this.initiateGame = this.initiateGame.bind(this);
     this.changeColor = this.changeColor.bind(this);
+    this.initiateGame = this.initiateGame.bind(this);
+
+    this.handleClick = this.handleClick.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+
   }
 
 
@@ -76,8 +81,8 @@ export default class Grid extends Component {
   //starting the game onClick and generating a new iteration of the
   //complete honeycomb according to a slightly modified version of the
   //forest-fire spread algorithm
-  initiateGame() {
-    console.log('game initiated')
+  initiateGame(stateCount) {
+    //console.log('game initiated')
 
     let newCombArray = this.state.comb;
     let counter = 1;
@@ -109,8 +114,11 @@ export default class Grid extends Component {
             const fireWalk = setInterval(() => {
 
                 //if the comb is red and the next comb is not a tree that will not ignite next round: 
+
+                if (this.state.comb[index + 1] !== undefined){
+
                 if (node.color === 'red' && this.state.comb[index + 1].color !== 'lime' && node.coordinate[1] !== -5) {
-                  console.log('HERE', node.coordinate, this.state.comb[index])
+                  //console.log('HERE', node.coordinate, this.state.comb[index])
 
                   //if the next comb in the array (on the diagonal SE) is also red, then change current comb's color to white, keep next
                   //comb's color red, change comb after next's color to red to create the illusion of walking
@@ -122,6 +130,7 @@ export default class Grid extends Component {
                     newCombArray[index + 1].color = 'red';
                     newCombArray[index - (counter - 1)].color = 'white';
                   }
+                  else counter--;
                 }
 
                 else {//at north row of hexagon, make the fire disappear
@@ -132,6 +141,9 @@ export default class Grid extends Component {
                     newCombArray[index - (counter - 1)].color = 'white';
                   }
                 }
+              }
+
+              //else newCombArray[index].color = 'white';
 
               clearInterval(fireWalk);
             })
@@ -157,6 +169,9 @@ export default class Grid extends Component {
       //CASE: RANDOMLY GENERATE FIRE IN EMPTY SPACE 
       if (node.color === 'white') {
           const fireChance = Math.random();
+          if (fireChance >= .99){
+            newCombArray[index].color = 'red';
+          }
       }
 
 
@@ -169,6 +184,34 @@ export default class Grid extends Component {
     }, 100)
 
     stateWalk;
+  }
+
+  handleClick(event){
+
+    event.preventDefault();
+    var numRounds = 1;
+
+    var rounds = setInterval(() => {
+      //console.log('state', this.state.counts);
+      this.initiateGame();
+
+      //run for a specified number of times OR run until there are no more trees
+      var fireEverywhere = this.state.comb.some(comb => {
+        if (comb.color === 'lime') return true;
+        else return false;
+      })
+
+      if (fireEverywhere === false || numRounds++ === this.state.counts){
+         clearInterval(rounds);
+      }
+    }, 250);
+
+    rounds;
+  }
+
+  handleChange(event){
+    var newCount = parseInt(event.target.value);
+    this.setState({counts: newCount})
   }
 
 
@@ -196,7 +239,17 @@ export default class Grid extends Component {
             </g>
           </svg>
         </div>
-        <button onClick={this.initiateGame}>IGNITE</button>
+        <div>
+          <select onChange={this.handleChange}>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="40">40</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <button onClick={this.handleClick}>IGNITE</button>
       </div>
     )
   }
