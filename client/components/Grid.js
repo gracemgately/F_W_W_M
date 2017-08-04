@@ -3,20 +3,19 @@ import { Router } from 'react-router'
 
 import { gridInfo } from './grid-info'
 import { coordinates } from './coordinates-info'
+import { CombNode } from './comb-constructor'
+import { findNeighbors } from './comb-neighbors'
+
+//FUNCTIONS FOR GAME
+import { ignite } from './ignite-trees';
+import { putOut } from './kill-fire';
+import { combIndicesToMutate } from './mutate-comb'
 
 import Comb from './Comb'
 
 /**
  * COMPONENT
  */
-
-class CombNode {
-  constructor(coordinates, color){
-    this.coordinate = coordinates,
-    this.color = color
-  }
-}
-
 export default class Grid extends Component {
 
   constructor(){
@@ -30,7 +29,10 @@ export default class Grid extends Component {
     this.changeColor = this.changeColor.bind(this);
   }
 
-  
+
+  //generating new comb object with coordinates that map to a 2D 
+  //location on the hexagonal grid, then placing them in an array
+  //and putting them on the state so we have access to all of them
   componentDidMount(){
     var honeyComb = [];
 
@@ -38,9 +40,14 @@ export default class Grid extends Component {
       var newComb = new CombNode(coordinate, 'white')
       honeyComb.push(newComb);
     })
+
     this.setState({comb: honeyComb})
   }
 
+
+  //changing color of a particular comb location on the 2D coordinate
+  //grid according to whether it is a tree (lime), a fire (red), or 
+  //empty (white)
   changeColor(currentCombCoords){
     this.state.comb.forEach((node, index) => {
       if (node.coordinate === currentCombCoords){
@@ -61,17 +68,91 @@ export default class Grid extends Component {
           newCombArray[index].color = node.color
         }
         this.setState({comb: newCombArray})
+
       }
     })
   }
 
+  //starting the game onClick and generating a new iteration of the
+  //complete honeycomb according to a slightly modified version of the
+  //forest-fire spread algorithm
   initiateGame(){
     console.log('game initiated')
 
-    //eventually dispatch some function on all components
-    //to check their state and compare to that of their neighbors
+    let newCombArray = this.state.comb;
 
-  }
+    this.state.comb.forEach((node, index) => {
+
+      //CASE: IGNITE TREES
+      if (node.color === 'lime') {
+
+        let nodeNeighbors = findNeighbors(node.coordinate);
+        let nodesToChangeCoords = ignite(node, nodeNeighbors, this.state.comb);
+
+        if (nodesToChangeCoords.length){
+            var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
+            changeIndices.forEach(index => {
+              newCombArray[index].color = 'red';
+            })
+         }
+    }
+
+      //CASE: PUT OUT SMALL FIRE
+      if(node.color === 'red'){
+
+        let nodeNeighbors = findNeighbors(node.coordinate);
+        let nodesToChangeCoords = putOut(node, nodeNeighbors, this.state.comb);
+        
+        //if a red comb is surrounded by three or more trees, turn it into an empty space    
+        if (nodesToChangeCoords.length){
+            var changeIndices = combIndicesToMutate(nodesToChangeCoords, this.state.comb);
+            changeIndices.forEach(index => {
+              newCombArray[index].color = 'white';
+            })
+         }
+
+        //if a red comb is surrounded by less than three trees, make that node 'walk' along 
+        //the x-axis and leave an empty space behind it 
+        if (!nodesToChangeCoords.length){
+
+          this.state.comb.forEach((combNode, index) => {
+
+            var fireWalk = setInterval(() => {
+              if (combNode.coordinate[0] === node.coordinate[0] && combNode.coordinate[1] === node.coordinate[1]) {
+                  newCombArray[index].color = 'white';
+              }
+              if (combNode.coordinate[0] === (node.coordinate[0] + 1) && combNode.coordinate[1] === node.coordinate[1]) {
+                  if (combNode.color === 'white') {
+                    newCombArray[index].color = 'red';
+                }
+              }
+              clearInterval(fireWalk);
+
+            },100)
+
+            fireWalk;
+
+          })
+        }
+      }
+
+      //CASE: RANDOMLY GENERATE FIRE IN EMPTY SPACE 
+      if (node.color === 'white'){
+
+      }
+
+      //FINALLY SET STATE TO MODIFIED ARRAY
+  })
+
+    //put state on an interval so all elements are loaded and state updates at once
+    var stateWalk = setInterval(() => {
+      this.setState({comb: newCombArray});
+      clearInterval(stateWalk);
+    }, 300)
+
+    stateWalk;
+}
+
 
   render () {
     return (
@@ -112,283 +193,5 @@ export default class Grid extends Component {
 //  */
 
 
-//        <g style={styles} transform={"translate(-129.90381056766577,225)"}>
-//       <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//           </g>
-//       <g style={styles} transform={"translate(-155.88457268119893,180)"}>
-//             <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                   </g>
-//       <g style={styles} transform="translate(-181.8653347947321,135)">
-//           <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-207.84609690826525,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-233.8268590217984,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-259.80762113533154,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-77.94228634059948,225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-103.92304845413263,180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-129.90381056766577,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-155.88457268119896,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-181.86533479473212,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-207.84609690826525,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-233.8268590217984,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-25.980762113533178,225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//                     </g>
-//       <g style={styles} transform="translate(-51.96152422706633,180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-77.94228634059948,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-103.92304845413264,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-129.9038105676658,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-155.88457268119896,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-181.86533479473212,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-207.84609690826525,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(25.980762113533153,225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(0,180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-25.980762113533153,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-51.96152422706631,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-77.94228634059948,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-103.92304845413263,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-129.90381056766577,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-155.88457268119896,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-181.86533479473212,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(77.94228634059947,225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(51.96152422706631,180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(25.980762113533164,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(0,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-25.980762113533157,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-51.96152422706631,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-77.94228634059948,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-103.92304845413263,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-129.90381056766577,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-155.88457268119896,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(129.90381056766577,225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(103.92304845413263,180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(77.94228634059948,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(51.96152422706631,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(25.980762113533157,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(0,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-25.980762113533157,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-51.96152422706631,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-77.94228634059948,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-103.92304845413263,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-129.90381056766577,-225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(155.88457268119896,180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(129.90381056766577,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(103.92304845413263,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(77.94228634059948,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(51.96152422706631,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(25.980762113533157,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(0,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-25.980762113533164,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-51.96152422706631,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-77.94228634059947,-225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(181.86533479473212,135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(155.88457268119896,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(129.90381056766577,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(103.92304845413263,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(77.94228634059948,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(51.96152422706631,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(25.980762113533153,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(0,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(-25.980762113533153,-225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(207.84609690826525,90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(181.86533479473212,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(155.88457268119896,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(129.9038105676658,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(103.92304845413264,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(77.94228634059948,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(51.96152422706633,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(25.980762113533178,-225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(233.8268590217984,45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(207.84609690826525,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(181.86533479473212,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(155.88457268119896,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(129.90381056766577,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(103.92304845413263,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(77.94228634059948,-225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(259.80762113533154,0)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(233.8268590217984,-45)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(207.84609690826525,-90)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(181.8653347947321,-135)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(155.88457268119893,-180)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//       <g style={styles} transform="translate(129.90381056766577,-225)">
-//         <polygon points="30.000,0.000 15.000,25.981 -15.000,25.981 -30.000,0.000 -15.000,-25.981 15.000,-25.981" transform="rotate(-30)"></polygon>
-//       </g>
-//         </g>
-//             </svg>
-//         </div>
-//     )
-//   }
-// }
+
 
