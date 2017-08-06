@@ -22,7 +22,6 @@ export default class Music extends Component{
     }
 
     render(){
-        console.log(this.state);
         return(
             <div className="small-container">
                 Music:
