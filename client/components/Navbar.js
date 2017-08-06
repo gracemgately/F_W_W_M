@@ -7,7 +7,7 @@ export default class Navbar extends Component{
     render(){
         return(
             <div className="small-container main-page">
-                <div>FIRE WALK WITH ME</div>
+                <div>FIRE WALK</div> <div>WITH ME</div>
                 <Grid />
             </div>
         )

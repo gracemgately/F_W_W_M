@@ -15,7 +15,7 @@ constructor(props){
 handleClick(event){
     event.preventDefault();
 
-    console.log('current coordinates', this.props.coordinate);
+    //console.log('current coordinates', this.props.coordinate);
     this.props.changeColor(this.props.coordinate)
 }
 

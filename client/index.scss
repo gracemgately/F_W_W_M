@@ -1,5 +1,8 @@
 body {
-  font-family: sans-serif;
+  margin-top: 0vw;
+  margin-right: 0vw;
+  margin-bottom: 0vw;
+  margin-left: 0vw;
 
   a {
     text-decoration: none;
@@ -25,7 +28,7 @@ body {
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
-    align-content: center
+    align-content: center;
   }
 
   .small-container {
@@ -56,4 +59,17 @@ body {
     background-repeat: no-repeat;
     background-size: cover;
   }
+
+  button {
+    background-color: black; 
+    border-color: lime;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-family: "Avant Garde", Avantgarde, "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+    font-size: 16px;
+}
+
 }

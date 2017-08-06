@@ -12,6 +12,7 @@ import { putOut } from './functions/kill-fire';
 import { combIndicesToMutate } from './functions/mutate-comb'
 
 import Comb from './Comb'
+import Music from './Music'
 
 /**
  * COMPONENT
@@ -241,6 +242,13 @@ export default class Grid extends Component {
         </div>
         <div className="item">
           <div className="small-container">
+            <div className="container">
+            Rounds: 
+            </div>
+            <div className="container">
+            <div>
+              <button className ="item" onClick={this.handleClick}>IGNITE</button>
+            </div>
             <div className="item">
               <select onChange={this.handleChange}>
                 <option value="5">5</option>
@@ -251,9 +259,8 @@ export default class Grid extends Component {
                 <option value="50">50</option>
               </select>
             </div>
-            <div>
-              <button className="item" onClick={this.handleClick}>IGNITE</button>
             </div>
+            <Music />
           </div>
         </div>
       </div>
