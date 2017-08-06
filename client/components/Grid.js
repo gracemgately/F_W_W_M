@@ -29,6 +29,7 @@ export default class Grid extends Component {
 
     this.changeColor = this.changeColor.bind(this);
     this.initiateGame = this.initiateGame.bind(this);
+    this.playAgain = this.playAgain.bind(this);
 
     this.handleClick = this.handleClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -215,6 +216,18 @@ export default class Grid extends Component {
     this.setState({counts: newCount})
   }
 
+  playAgain(event){
+    event.preventDefault();
+
+     var clearCombArray = this.state.comb;
+     this.state.comb.forEach((comb, index) => {
+       clearCombArray[index].color = 'white';
+     });
+
+     this.setState({comb: clearCombArray})
+
+  }
+
 
   render() {
     return (
@@ -242,9 +255,8 @@ export default class Grid extends Component {
         </div>
         <div className="item">
           <div className="small-container">
-            <div className="container">
+            <div className="small-container">
             Rounds: 
-            </div>
             <div className="container">
             <div>
               <button className ="item" onClick={this.handleClick}>IGNITE</button>
@@ -260,7 +272,11 @@ export default class Grid extends Component {
               </select>
             </div>
             </div>
+            </div>
             <Music />
+              <div className="container">
+                <button className ="item" onClick={this.playAgain}>PLAY AGAIN</button>
+              </div>
           </div>
         </div>
       </div>
