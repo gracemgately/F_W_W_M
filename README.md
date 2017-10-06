@@ -10,3 +10,5 @@ Fire Walk with Me is an interactive cellular automata game based on David Lynch'
 * Webpack
 * Babel
 * Sass/SCSS
+* Youtube API
+
